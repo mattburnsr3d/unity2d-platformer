@@ -47,8 +47,5 @@ public class Projectile : MonoBehaviour
         transform.localScale = new Vector2(localScaleXAxis, transform.localScale.y);
     }
 
-    private void Deactivate()
-    {
-        gameObject.SetActive(false);
-    }
+    private void Deactivate() => gameObject.SetActive(false);
 }
