@@ -3,15 +3,6 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    // Creates a references to game object's components
-    private Rigidbody2D rb2d;
-    private Animator animator;
-    private BoxCollider2D boxCollider;
-
-    private float horizontalInput;
-
-    private float wallJumpCooldown;
-
     // This annotation allows to change the value directly from unity
     [SerializeField]
     private float speed;
@@ -25,13 +16,21 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField]
     private LayerMask wallLayerMask;
 
+    // Creates a references to game object's components
+    private Rigidbody2D _rb2d;
+    private Animator _animator;
+    private BoxCollider2D _boxCollider;
+
+    private float horizontalInput;
+    private float wallJumpCooldown;
+
     // Awake is called every time the script is loaded
     private void Awake()
     {
         // Grab references from game object
-        rb2d = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
-        boxCollider = GetComponent<BoxCollider2D>();
+        _rb2d = GetComponent<Rigidbody2D>();
+        _animator = GetComponent<Animator>();
+        _boxCollider = GetComponent<BoxCollider2D>();
     }
 
     // Update is called once per frame
@@ -47,9 +46,9 @@ public class PlayerMovement : MonoBehaviour
         else if (horizontalInput < -0.01f)
             transform.localScale = new Vector2(-1, 1);
 
-        // Set animator parameters
-        animator.SetBool("run", horizontalInput != 0);  // horizontalInput will be 0 if no inputs are being triggered (idle)
-        animator.SetBool("grounded", IsGrounded());
+        // Set _animator parameters
+        _animator.SetBool("run", horizontalInput != 0);  // horizontalInput will be 0 if no inputs are being triggered (idle)
+        _animator.SetBool("grounded", IsGrounded());
 
         if (wallJumpCooldown > 0.2f)
         {
@@ -58,15 +57,15 @@ public class PlayerMovement : MonoBehaviour
             //       x = Up/Down
             //       y = Left/Right
             //       z = Backwards/Fowards (not present in 2D)
-            rb2d.linearVelocity = new Vector2(horizontalInput * speed, rb2d.linearVelocityY);
+            _rb2d.linearVelocity = new Vector2(horizontalInput * speed, _rb2d.linearVelocityY);
 
             if (OnWall() && !IsGrounded())
             {
-                rb2d.gravityScale = 0;
-                rb2d.linearVelocity = Vector2.zero;
+                _rb2d.gravityScale = 0;
+                _rb2d.linearVelocity = Vector2.zero;
             }
             else
-                rb2d.gravityScale = 2f;
+                _rb2d.gravityScale = 2f;
 
             if (Input.GetKey(KeyCode.Space))
                 Jump();
@@ -79,45 +78,43 @@ public class PlayerMovement : MonoBehaviour
     {
         if (IsGrounded())
         {
-            animator.SetTrigger("jump");
-            rb2d.linearVelocity = new Vector2(rb2d.linearVelocityX, jumpPower);             // Maintain the X axis speed, change the value on the Y axis
+            _animator.SetTrigger("jump");
+            _rb2d.linearVelocity = new Vector2(_rb2d.linearVelocityX, jumpPower);             // Maintain the X axis speed, change the value on the Y axis
         }
         else if (OnWall() && !IsGrounded())
         {
             if (horizontalInput == 0)
             {
-                rb2d.linearVelocity = new Vector2(-Mathf.Sign(transform.localScale.x) * 10, 0f);
+                _rb2d.linearVelocity = new Vector2(-Mathf.Sign(transform.localScale.x) * 10, 0f);
             }
             else
-                rb2d.linearVelocity = new Vector2(-Mathf.Sign(transform.localScale.x) * 3, 6f);  // Pushes player against the wall for wall jumping mechanics
+                _rb2d.linearVelocity = new Vector2(-Mathf.Sign(transform.localScale.x) * 3, 6f);  // Pushes player against the wall for wall jumping mechanics
 
             wallJumpCooldown = 0f;
         }
     }
 
     // Detects collisions between 2D objects
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-    }
+    private void OnCollisionEnter2D(Collision2D collision) { }
 
-    private bool IsGrounded()
-    {
-        // Casts a ray from a point of origin,
-        // if the line intersects with an object with a collider then returns "true".
-        return !Physics2D.BoxCast(
-            boxCollider.bounds.center,
-            boxCollider.bounds.size,
+    public bool CanAttack() => horizontalInput == 0 && IsGrounded() && !OnWall();
+
+    // BoxCast = Casts a ray from a point of origin,
+    // if the line intersects with an object with a collider then returns "true".
+    private bool IsGrounded() =>
+        !Physics2D.BoxCast(
+            _boxCollider.bounds.center,
+            _boxCollider.bounds.size,
             0,
             Vector2.down,
             0.1f,
             groundLayerMask
         ).collider.IsUnityNull();
-    }
 
     private bool OnWall() =>
         !Physics2D.BoxCast(
-            boxCollider.bounds.center,
-            boxCollider.bounds.size,
+            _boxCollider.bounds.center,
+            _boxCollider.bounds.size,
             0,
             new(transform.localScale.x, 0),
             0.1f,
